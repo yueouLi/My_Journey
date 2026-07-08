@@ -1,30 +1,30 @@
-# Photos
+# Music
 
-Drop your photos here and update the paths in `index.html`.
+## How it works
+- Player looks for `music/journey.mp3` (fallback: `music/journey.ogg`)
+- If no file exists (or fails to load), the site **generates an ambient drone in real time** using Web Audio API — so it always sounds like something, even before you add a track
 
-## Expected filenames (referenced in HTML as commented `<img>` tags)
+## Add your own track
+1. Drop an MP3 into this folder, name it `journey.mp3`
+2. Reload the page
+3. Click the play button (bottom-right corner)
 
-### Chapters (timeline)
-- `2020-arrival.jpg` — Chapter 01, first arrival in Munich
-- `2021-lmu.jpg` — Chapter 02, LMU / start of KI studies
-- `2023-study.jpg` — Chapter 03, bridge year
-- `2024-allianz.jpg` — Chapter 04, Allianz start
-- `2025-foto2text.jpg` — Chapter 05, Foto2Text project
-- `2026-now.jpg` — Chapter 06, present day
+## Where to find copyright-safe music
+- **YouTube Audio Library** — free, no attribution needed
+  https://studio.youtube.com/channel/UC/music
+- **Pixabay Music** — CC0
+  https://pixabay.com/music/
+- **Free Music Archive** — CC-licensed
+  https://freemusicarchive.org/
+- **Uppbeat** — free tier with attribution
+  https://uppbeat.io/
 
-### Archive (photo wall)
-- `archive-01.jpg` — landscape (large card)
-- `archive-02.jpg` — portrait (pill card)
-- `archive-03.jpg` — square/portrait (circle card)
-- `archive-04.jpg` — wide/landscape (wide card)
+## Genre suggestions for this site
+- ambient / drone
+- lo-fi minimal
+- cinematic piano
+- neo-classical / Nils Frahm style
+- Brian Eno "Music for Airports" style
 
-## Aspect ratios (recommended crops)
-- rect (4:5) portrait
-- square (1:1) — will be masked to a circle
-- wide (16:9) landscape
-- pill (3:5) tall portrait — will be masked to a pill shape
-
-## Activate a photo
-In `index.html`, find the corresponding `<div class="frame ...">` block and:
-1. Delete or comment out `<div class="placeholder">...</div>`
-2. Uncomment the `<img src="photos/....jpg" ...>` line
+## Change the display name
+In `index.html`, find `<div class="track" id="trackName">` and edit the text.
