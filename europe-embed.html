@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Europe — ambient</title>
+
+<style>
+  :root {
+    --bg: #f2f2f2;
+    --ink: #111111;
+    --mute: #838282;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: 'Satoshi', system-ui, sans-serif;
+  }
+
+  #stage { width: 100vw; height: 100vh; display: block; }
+
+  /* Country outlines — very faint on both visited & unvisited */
+  .country {
+    fill: none;
+    stroke: rgba(17, 17, 17, 0.06);
+    stroke-width: 0.4;
+  }
+  .country.visited {
+    stroke: rgba(17, 17, 17, 0.14);
+    stroke-width: 0.55;
+  }
+
+  /* Graticule — barely-there grid */
+  .graticule {
+    fill: none;
+    stroke: rgba(17, 17, 17, 0.03);
+    stroke-width: 0.3;
+  }
+
+  /* Arcs — thin gray, no gradient */
+  .arc {
+    fill: none;
+    stroke: rgba(17, 17, 17, 0.15);
+    stroke-width: 0.6;
+    stroke-linecap: round;
+  }
+
+  /* City dots — subtle dark point with faint halo */
+  .city-dot {
+    fill: rgba(17, 17, 17, 0.65);
+    opacity: 0;
+  }
+  .city-dot.lit {
+    animation: dotIn 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes dotIn {
+    0% { opacity: 0; transform: scale(0); }
+    60% { opacity: 1; transform: scale(1.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Continuous pulse — very soft */
+  .pulse {
+    fill: none;
+    stroke: rgba(17, 17, 17, 0.35);
+    stroke-width: 0.6;
+    opacity: 0;
+  }
+  .pulse.active {
+    animation: pulse 3.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .pulse.active.d1 { animation-delay: 1.2s; }
+  .pulse.active.d2 { animation-delay: 2.4s; }
+  @keyframes pulse {
+    0% { r: 3; stroke-width: 0.9; opacity: 0.5; }
+    100% { r: 26; stroke-width: 0.1; opacity: 0; }
+  }
+
+  /* Shockwave when a dot lights */
+  .shock {
+    fill: none;
+    stroke: rgba(17, 17, 17, 0.5);
+    stroke-width: 0.8;
+    opacity: 0;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+  .shock.fire {
+    animation: shock 2.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes shock {
+    0% { r: 2; stroke-width: 1.2; opacity: 0.7; }
+    100% { r: 40; stroke-width: 0.1; opacity: 0; }
+  }
+
+  /* Traveller (moving marker along arc) */
+  .traveller {
+    fill: rgba(17, 17, 17, 0.9);
+  }
+
+  /* Vignette so the map fades softly at edges (blends into parent bg) */
+  #stage-wrap {
+    position: fixed;
+    inset: 0;
+  }
+  #stage-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, var(--bg) 95%);
+    pointer-events: none;
+    z-index: 2;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage-wrap">
+  <svg id="stage" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+
+<script>
+const cities = [
+  { lon: 11.5820, lat: 48.1351, order: 1  },   // München
+  { lon: 13.4050, lat: 52.5200, order: 2  },   // Berlin
+  { lon: 12.3731, lat: 51.3397, order: 3  },   // Leipzig
+  { lon: 11.3235, lat: 50.9795, order: 4  },   // Weimar
+  { lon:  6.9603, lat: 50.9375, order: 5  },   // NRW
+  { lon:  4.3007, lat: 52.0705, order: 6  },   // Den Haag
+  { lon:  2.3522, lat: 48.8566, order: 7  },   // Paris
+  { lon:  7.2620, lat: 43.7102, order: 8  },   // Nice
+  { lon:  2.1734, lat: 41.3851, order: 9  },   // Barcelona
+  { lon:  2.6502, lat: 39.5696, order: 10 },   // Mallorca
+  { lon: 11.2558, lat: 43.7696, order: 11 },   // Toskana
+  { lon: 12.3155, lat: 45.4408, order: 12 },   // Venedig
+  { lon: 13.0550, lat: 47.8095, order: 13 },   // Salzburg
+  { lon: 16.3738, lat: 48.2082, order: 14 },   // Wien
+  { lon: 14.4378, lat: 50.0755, order: 15 },   // Prag
+  { lon: 19.0402, lat: 47.4979, order: 16 }    // Budapest
+].sort((a, b) => a.order - b.order);
+
+const svg = d3.select('#stage');
+let width = window.innerWidth;
+let height = window.innerHeight;
+
+const projection = d3.geoConicConformal()
+  .center([10, 50])
+  .parallels([35, 65])
+  .rotate([-10, 0]);
+
+function fit() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  const scale = Math.min(width, height) * 0.95;
+  projection.scale(scale).translate([width / 2, height / 2]);
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+}
+fit();
+const path = d3.geoPath(projection);
+
+function arcPath(a, b, h = 0.24) {
+  const p1 = projection([a.lon, a.lat]);
+  const p2 = projection([b.lon, b.lat]);
+  const mx = (p1[0] + p2[0]) / 2;
+  const my = (p1[1] + p2[1]) / 2;
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  const len = Math.hypot(dx, dy);
+  const nx = -dy / len;
+  const ny = dx / len;
+  const cx = mx + nx * len * h;
+  const cy = my + ny * len * h;
+  return { d: `M${p1[0]},${p1[1]} Q${cx},${cy} ${p2[0]},${p2[1]}` };
+}
+
+d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+  .then(world => {
+    const countries = topojson.feature(world, world.objects.countries);
+    const euro = countries.features.filter(f => {
+      try {
+        const c = d3.geoCentroid(f);
+        return c[0] > -25 && c[0] < 45 && c[1] > 34 && c[1] < 72;
+      } catch { return false; }
+    });
+
+    // Graticule
+    svg.append('path')
+      .datum(d3.geoGraticule().step([10, 10])())
+      .attr('class', 'graticule')
+      .attr('d', path);
+
+    // Countries — visited ones slightly darker
+    const visited = new Set([276, 528, 250, 724, 380, 40, 203, 348]);
+    svg.selectAll('.country')
+      .data(euro)
+      .enter()
+      .append('path')
+      .attr('class', d => visited.has(+d.id) ? 'country visited' : 'country')
+      .attr('d', path);
+
+    // Arcs
+    const arcs = [];
+    for (let i = 0; i < cities.length - 1; i++) {
+      const info = arcPath(cities[i], cities[i + 1]);
+      const arcEl = svg.append('path')
+        .attr('class', 'arc')
+        .attr('d', info.d);
+      const len = arcEl.node().getTotalLength();
+      arcEl
+        .attr('stroke-dasharray', len)
+        .attr('stroke-dashoffset', len);
+      arcs.push({ el: arcEl, len });
+    }
+
+    // City groups (dots + pulses + shockwave)
+    const groups = svg.selectAll('.city-group')
+      .data(cities)
+      .enter()
+      .append('g')
+      .attr('class', 'city-group')
+      .attr('transform', d => {
+        const p = projection([d.lon, d.lat]);
+        return `translate(${p[0]}, ${p[1]})`;
+      });
+
+    groups.append('circle').attr('class', 'pulse').attr('r', 3);
+    groups.append('circle').attr('class', 'pulse d1').attr('r', 3);
+    groups.append('circle').attr('class', 'pulse d2').attr('r', 3);
+    groups.append('circle').attr('class', 'shock').attr('r', 3);
+    groups.append('circle').attr('class', 'city-dot').attr('r', 2.5);
+
+    const traveller = svg.append('circle')
+      .attr('class', 'traveller')
+      .attr('r', 2.2)
+      .style('opacity', 0);
+
+    // ================================================================
+    // AUTOPLAY LOOP — plays once, waits, replays forever
+    // ================================================================
+    function play() {
+      groups.selectAll('.city-dot').classed('lit', false);
+      groups.selectAll('.pulse').classed('active', false);
+      groups.selectAll('.shock').classed('fire', false);
+      arcs.forEach(a => a.el.attr('stroke-dashoffset', a.len));
+      traveller.style('opacity', 0);
+
+      const step = 1100;
+      let delay = 500;
+
+      cities.forEach((city, i) => {
+        setTimeout(() => {
+          const g = groups.filter((d, idx) => idx === i);
+          g.selectAll('.city-dot').classed('lit', true);
+          g.selectAll('.pulse').classed('active', true);
+
+          const shock = g.select('.shock').node();
+          if (shock) {
+            shock.classList.remove('fire');
+            void shock.getBoundingClientRect();
+            shock.classList.add('fire');
+          }
+
+          if (i < arcs.length) {
+            const arc = arcs[i];
+            arc.el.transition()
+              .duration(step - 100)
+              .ease(d3.easeCubicInOut)
+              .attr('stroke-dashoffset', 0);
+
+            traveller.style('opacity', 0.9);
+            const node = arc.el.node();
+            traveller.transition()
+              .duration(step - 100)
+              .ease(d3.easeCubicInOut)
+              .tween('m', function() {
+                return function(t) {
+                  const pt = node.getPointAtLength(arc.len * t);
+                  d3.select(this).attr('cx', pt.x).attr('cy', pt.y);
+                };
+              });
+          }
+        }, delay);
+        delay += step;
+      });
+
+      setTimeout(() => traveller.transition().duration(800).style('opacity', 0), delay);
+      // Loop: wait 5s, then restart
+      setTimeout(play, delay + 5000);
+    }
+
+    play();
+  });
+
+let rTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(rTimer);
+  rTimer = setTimeout(() => location.reload(), 300);
+});
+</script>
+
+</body>
+</html>

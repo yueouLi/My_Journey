@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leonie Li (Yueou Li) — Journey</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600&f[]=satoshi@500,400,700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f2f2f2;
+    --ink: #111111;
+    --ink-soft: #1e1e1e;
+    --gray-1: #bfbfbf;
+    --gray-2: #c9c9c9;
+    --gray-3: #d1d1d1;
+    --gray-4: #d9d9d9;
+    --mute: #838282;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 500;
+    overflow-x: hidden;
+  }
+
+  /* ============ Fixed WebGL Canvas ============ */
+  #scene {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Transitional "void" sections — let the 3D scene take over */
+  .void {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+    position: relative;
+  }
+  .void .marker {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: clamp(60px, 8vw, 140px);
+    letter-spacing: -0.05em;
+    line-height: 0.9;
+    color: var(--ink);
+    text-align: center;
+    mix-blend-mode: multiply;
+    opacity: 0.9;
+  }
+  .void .marker em {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--mute);
+  }
+  .void .sub {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* Give content sections a translucent background so 3D peeks through subtly */
+  main > section:not(.hero):not(.void):not(.map-embed) {
+    background: rgba(242, 242, 242, 0.72);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    position: relative;
+    z-index: 5;
+  }
+
+  /* ============ Embedded Europe Map — ambient / faint ============ */
+  .map-embed {
+    padding: 140px 48px !important;
+    min-height: 100vh;
+    position: relative;
+    background: transparent;
+    overflow: hidden;
+  }
+  .map-embed .map-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.9;
+  }
+  .map-embed iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  .map-embed .map-copy {
+    position: relative;
+    z-index: 5;
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+    pointer-events: none;
+  }
+  .map-embed .map-copy .kicker {
+    font-family: 'Satoshi', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  .map-embed .map-copy .kicker::before,
+  .map-embed .map-copy .kicker::after {
+    content: '';
+    width: 40px; height: 1px;
+    background: rgba(30, 30, 30, 0.25);
+  }
+  .map-embed .map-copy .headline {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: clamp(36px, 5vw, 68px);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    margin-bottom: 24px;
+  }
+  .map-embed .map-copy .headline em {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .map-embed .map-copy .lead {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    font-weight: 400;
+    max-width: 560px;
+    margin: 0 auto 40px;
+  }
+  .map-embed .map-copy .stats {
+    display: inline-flex;
+    gap: 48px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(30, 30, 30, 0.12);
+  }
+  .map-embed .map-copy .stats > div {
+    text-align: center;
+  }
+  .map-embed .map-copy .stats .num {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    display: block;
+  }
+  .map-embed .map-copy .stats .lbl {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-top: 6px;
+    display: block;
+  }
+  @media (max-width: 700px) {
+    .map-embed { padding: 100px 24px !important; }
+    .map-embed .map-copy .stats { gap: 24px; }
+    .map-embed .map-copy .stats .num { font-size: 28px; }
+  }
+
+  /* ============ Sticky Nav ============ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 80px;
+    background: rgba(242, 242, 242, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    border-bottom: 1px solid rgba(30, 30, 30, 0.06);
+  }
+  nav .brand {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+  }
+  nav ul {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  nav ul a {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  nav ul a:hover { color: var(--mute); }
+  nav .contact {
+    padding: 10px 22px;
+    border: 1px solid var(--ink-soft);
+    border-radius: 999px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    color: var(--ink);
+    transition: all 200ms ease;
+  }
+  nav .contact:hover {
+    background: var(--ink-soft);
+    color: var(--bg);
+  }
+
+  /* ============ Content Layers ============ */
+  main {
+    position: relative;
+    z-index: 10;
+  }
+
+  section {
+    min-height: 100vh;
+    padding: 120px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* ============ Hero — Echo Stack ============ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 24px;
+  }
+  .echo-stack {
+    position: relative;
+    display: inline-block;
+    line-height: 0.9;
+  }
+  .echo-stack .word {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: clamp(80px, 11vw, 180px);
+    letter-spacing: -0.05em;
+    line-height: 0.9;
+    display: block;
+  }
+  .echo-stack .word.foreground {
+    position: relative;
+    color: var(--ink);
+    z-index: 5;
+  }
+  .echo-stack .word.echo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    user-select: none;
+  }
+  .echo-stack .word.echo.e1 { transform: translate(-0.04em, -0.04em); color: var(--gray-1); z-index: 4; }
+  .echo-stack .word.echo.e2 { transform: translate(-0.08em, -0.08em); color: var(--gray-2); z-index: 3; }
+  .echo-stack .word.echo.e3 { transform: translate(-0.12em, -0.12em); color: var(--gray-3); z-index: 2; }
+  .echo-stack .word.echo.e4 { transform: translate(-0.16em, -0.16em); color: var(--gray-4); z-index: 1; }
+
+  .hero-meta {
+    position: absolute;
+    bottom: 60px;
+    left: 48px;
+    right: 48px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--mute);
+  }
+  .hero-meta .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--ink);
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* ============ Section Header (Narrative) ============ */
+  .narrative {
+    text-align: center;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .narrative::before {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 80px;
+    background: rgba(30, 30, 30, 0.15);
+    margin: 0 auto 60px;
+  }
+  .narrative .quote {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 600;
+    font-size: clamp(32px, 4.5vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 80px;
+  }
+  .narrative .quote em {
+    font-family: 'Times New Roman', 'Georgia', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .narrative .three-col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    text-align: left;
+    margin-top: 40px;
+  }
+  .narrative .three-col h3 {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .narrative .three-col p {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+
+  /* ============ Timeline / Chapter ============ */
+  .chapter {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .chapter.reverse .chapter-text { order: 2; }
+  .chapter.reverse .chapter-visual { order: 1; }
+
+  .chapter-text .year {
+    font-family: 'Satoshi', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chapter-text .year::before {
+    content: '';
+    width: 40px; height: 1px;
+    background: var(--ink);
+  }
+  .chapter-text h2 {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: clamp(48px, 6vw, 88px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    margin-bottom: 32px;
+  }
+  .chapter-text h2 em {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .chapter-text .lead {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-bottom: 32px;
+    font-weight: 400;
+    max-width: 520px;
+  }
+  .chapter-text .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chapter-text .tags span {
+    padding: 6px 14px;
+    border: 1px solid rgba(30, 30, 30, 0.15);
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ============ Visual Frames — hold real photos ============ */
+  .frame {
+    position: relative;
+    overflow: hidden;
+    background: var(--gray-3);
+  }
+  .frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(20%);
+    transform: scale(1);
+    transition: filter 700ms cubic-bezier(0.77, 0, 0.175, 1),
+                transform 700ms cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  .frame:hover img {
+    filter: grayscale(0%);
+    transform: scale(1.05);
+  }
+  .frame .placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Clash Display', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    background: repeating-linear-gradient(
+      45deg,
+      var(--gray-4),
+      var(--gray-4) 20px,
+      var(--gray-3) 20px,
+      var(--gray-3) 40px
+    );
+  }
+  .frame-rect { aspect-ratio: 4 / 5; border-radius: 6px; }
+  .frame-pill { aspect-ratio: 3 / 5; border-radius: 9999px; height: 500px; margin: 0 auto; max-width: 320px; }
+  .frame-square { aspect-ratio: 1 / 1; border-radius: 50%; }
+  .frame-wide { aspect-ratio: 16 / 9; border-radius: 6px; }
+
+  /* ============ Asymmetrical Showcase ============ */
+  .showcase {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+  }
+  .showcase .card {
+    position: relative;
+    overflow: hidden;
+  }
+  .showcase .card.large { grid-column: span 8; aspect-ratio: 16 / 10; border-radius: 8px; background: var(--gray-3); }
+  .showcase .card.pill { grid-column: span 4; height: 500px; border-radius: 9999px; background: var(--gray-3); }
+  .showcase .card.circle { grid-column: span 5; aspect-ratio: 1 / 1; border-radius: 50%; background: var(--gray-3); }
+  .showcase .card.wide { grid-column: span 7; aspect-ratio: 16 / 9; border-radius: 8px; background: var(--gray-3); }
+
+  .showcase .card img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: grayscale(20%);
+    transition: all 700ms cubic-bezier(0.77, 0, 0.175, 1);
+    display: block;
+  }
+  .showcase .card:hover img {
+    filter: grayscale(0%);
+    transform: scale(1.05);
+  }
+  .showcase .card.circle img,
+  .showcase .card.pill img {
+    border-radius: inherit;
+  }
+  .showcase .card .placeholder {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Clash Display', sans-serif;
+    font-size: 13px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--mute);
+    background: repeating-linear-gradient(45deg, var(--gray-4), var(--gray-4) 20px, var(--gray-3) 20px, var(--gray-3) 40px);
+  }
+
+  /* ============ Footer ============ */
+  footer {
+    background: var(--ink-soft);
+    color: rgba(246, 246, 246, 0.6);
+    padding: 80px 48px 40px;
+    position: relative;
+    z-index: 10;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  footer .grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 48px;
+    padding-bottom: 60px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  footer h4 {
+    color: #f6f6f6;
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    margin-bottom: 20px;
+  }
+  footer p, footer a {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(246, 246, 246, 0.6);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 8px;
+  }
+  footer a:hover { color: #f6f6f6; }
+  footer .brand-summary p { max-width: 320px; }
+  footer .signature {
+    max-width: 1400px;
+    margin: 40px auto 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(246, 246, 246, 0.4);
+  }
+
+  /* ============ Music Player ============ */
+  .music-player {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(242, 242, 242, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 10px 18px 10px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(30, 30, 30, 0.1);
+    transition: all 300ms cubic-bezier(0.77, 0, 0.175, 1);
+    cursor: pointer;
+    user-select: none;
+  }
+  .music-player:hover {
+    background: rgba(242, 242, 242, 1);
+    border-color: rgba(30, 30, 30, 0.3);
+  }
+  .music-player .btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .music-player .btn svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--bg);
+  }
+  .music-player .btn .icon-play { display: block; }
+  .music-player .btn .icon-pause { display: none; }
+  .music-player.playing .btn .icon-play { display: none; }
+  .music-player.playing .btn .icon-pause { display: block; }
+
+  /* Pulsing ring when playing */
+  .music-player .btn::before,
+  .music-player .btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid var(--ink);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .music-player.playing .btn::before {
+    animation: pulse 2s ease-out infinite;
+  }
+  .music-player.playing .btn::after {
+    animation: pulse 2s ease-out infinite 1s;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+
+  .music-player .meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    min-width: 0;
+  }
+  .music-player .meta .label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-bottom: 3px;
+  }
+  .music-player .meta .track {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Simple audio-driven visualiser bars */
+  .music-player .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+    margin-left: 4px;
+    opacity: 0;
+    transition: opacity 200ms;
+  }
+  .music-player.playing .bars {
+    opacity: 1;
+  }
+  .music-player .bars span {
+    display: block;
+    width: 2px;
+    background: var(--ink);
+    height: 100%;
+    transform-origin: bottom;
+    animation: bar 1s ease-in-out infinite;
+  }
+  .music-player .bars span:nth-child(1) { animation-delay: 0s; }
+  .music-player .bars span:nth-child(2) { animation-delay: 0.2s; }
+  .music-player .bars span:nth-child(3) { animation-delay: 0.4s; }
+  .music-player .bars span:nth-child(4) { animation-delay: 0.1s; }
+  @keyframes bar {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+  }
+
+  @media (max-width: 600px) {
+    .music-player .meta { display: none; }
+    .music-player { padding: 6px; }
+  }
+
+  /* ============ Scroll indicator ============ */
+  .scroll-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--mute);
+    z-index: 50;
+    animation: bounce 2.4s infinite ease-in-out;
+    pointer-events: none;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translate(-50%, 0); opacity: 0.7; }
+    50% { transform: translate(-50%, 8px); opacity: 1; }
+  }
+
+  /* ============ Responsive ============ */
+  @media (max-width: 900px) {
+    nav { padding: 0 24px; }
+    nav ul { display: none; }
+    section { padding: 80px 24px; }
+    .chapter { grid-template-columns: 1fr; gap: 40px; }
+    .chapter.reverse .chapter-text { order: 1; }
+    .chapter.reverse .chapter-visual { order: 2; }
+    .narrative .three-col { grid-template-columns: 1fr; }
+    .showcase { grid-template-columns: repeat(6, 1fr); }
+    .showcase .card.large, .showcase .card.pill,
+    .showcase .card.circle, .showcase .card.wide { grid-column: span 6; }
+    .showcase .card.pill { height: 400px; }
+    footer .grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<nav>
+  <div class="brand">LEONIE LI</div>
+  <ul>
+    <li><a href="#chapter-1">Chapters</a></li>
+    <li><a href="#map">Map</a></li>
+    <li><a href="#certifications">Certs</a></li>
+    <li><a href="#network">Network</a></li>
+    <li><a href="#hobbies">Hobbies</a></li>
+    <li><a href="#footer">About</a></li>
+  </ul>
+  <a href="mailto:lyoleonie@gmail.com" class="contact">Get in Touch</a>
+</nav>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="echo-stack">
+      <span class="word echo e4">JOURNEY</span>
+      <span class="word echo e3">JOURNEY</span>
+      <span class="word echo e2">JOURNEY</span>
+      <span class="word echo e1">JOURNEY</span>
+      <span class="word foreground">JOURNEY</span>
+    </div>
+    <div class="hero-meta">
+      <div><span class="dot"></span>2019 &mdash; Present</div>
+      <div>Jilin &middot; M&uuml;nchen &middot; Starnberg</div>
+    </div>
+    <div style="position: absolute; bottom: 140px; left: 50%; transform: translateX(-50%); text-align: center; font-family: 'Satoshi', sans-serif; font-size: 13px; color: var(--mute); letter-spacing: 0.15em; text-transform: uppercase; z-index: 6;">
+      Leonie Li (Yueou Li) &middot; Allianz &middot; Messe M&uuml;nchen &middot; LMU M&uuml;nchen
+    </div>
+  </section>
+
+  <!-- ============ VOID 1 — enter the timeline ============ -->
+  <section class="void">
+    <div class="marker">Enter the <em>timeline</em>.</div>
+    <div class="sub">6 chapters &middot; 6 years &middot; 2 continents</div>
+  </section>
+
+  <!-- ============ NARRATIVE ============ -->
+  <section>
+    <div class="narrative">
+      <p class="quote">
+        I like sitting with the business, shipping the system, and owning the outcome from end to end.
+      </p>
+      <div class="three-col">
+        <div>
+          <h3>Discover</h3>
+          <p>I like to work close to the business. That is what I did at Messe M&uuml;nchen as first point of contact for IT demand, and now at Allianz for AI use cases in claims and process intelligence.</p>
+        </div>
+        <div>
+          <h3>Build</h3>
+          <p>I enjoy building working prototypes myself. Approval flows in Access, VBA and Power Automate at Messe. A Streamlit rating platform for my thesis. Local Python prototypes at Allianz before anything touches the enterprise stack.</p>
+        </div>
+        <div>
+          <h3>Deploy</h3>
+          <p>A tool that nobody uses is not really finished. So I care about documentation, decision templates, and things like the internal Claude Code workshop I ran at Allianz to help the team actually adopt the workflow.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHAPTER 1 — Jilin 2019-2021 ============ -->
+  <section id="chapter-1">
+    <div class="chapter">
+      <div class="chapter-text">
+        <div class="year">Sep 2019 &mdash; Jul 2021 &middot; Chapter 01</div>
+        <h2>Learning a <em>language</em>.</h2>
+        <p class="lead">
+          I studied German Language and Literature at Jilin Normal University.
+          A lot of speech competitions, a lot of vocabulary lists, and my TestDaF certificate
+          about eighteen months in. The photo on the right is basically what my desk looked like for two years.
+        </p>
+        <div class="tags">
+          <span>Jilin Normal University</span>
+          <span>B.A. Germanistik</span>
+          <span>TestDaF &middot; 2021.03</span>
+          <span>DSH 2</span>
+        </div>
+      </div>
+      <div class="chapter-visual">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div class="frame frame-rect">
+            <img src="photos/chapter-jilin-speech.jpg" alt="German speech competition, Jilin" />
+          </div>
+          <div class="frame" style="aspect-ratio: 3/4; border-radius: 6px;">
+            <img src="photos/chapter-testdaf-books.png" alt="TestDaF study materials &mdash; ring files and books" style="width:100%; height:100%; object-fit: cover;" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHAPTER 2 — LMU start 2022 ============ -->
+  <section id="chapter-2">
+    <div class="chapter reverse">
+      <div class="chapter-text">
+        <div class="year">Oct 2022 &mdash; Aug 2026 &middot; Chapter 02</div>
+        <h2>Language meets <em>machine</em>.</h2>
+        <p class="lead">
+          I moved to Munich to start a B.Sc. in Computational Linguistics with a minor in Computer Science.
+          For me, large language models are the interesting bridge between the two sides of my background:
+          the years of studying how humans use language, and the code that lets machines start to work with it.
+        </p>
+        <div class="tags">
+          <span>LMU M&uuml;nchen</span>
+          <span>Computational Linguistics</span>
+          <span>Minor: Informatik</span>
+          <span>LLMs as the bridge</span>
+        </div>
+      </div>
+      <div class="chapter-visual">
+        <div class="frame frame-rect">
+          <img src="photos/chapter-lmu-fountain.png" alt="LMU M&uuml;nchen &mdash; Geschwister-Scholl-Platz" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHAPTER 3 — RS Components 2022-2023 ============ -->
+  <section id="chapter-3">
+    <div class="chapter">
+      <div class="chapter-text">
+        <div class="year">Nov 2022 &mdash; Apr 2023 &middot; Chapter 03</div>
+        <h2>SLS Language <em>Hub</em>.</h2>
+        <p class="lead">
+          My first real project. I joined the RS Components global competition as
+          linguist and programmer, building a Python tool that turned meeting presentations into text
+          and helped design a real-time language training solution. Our team ended up in the global top ten,
+          which was the first time I saw my two backgrounds actually paying off together.
+        </p>
+        <div class="tags">
+          <span>RS Components</span>
+          <span>SLS Language Hub</span>
+          <span>Top 10 Global</span>
+          <span>Linguist &amp; Programmer</span>
+        </div>
+      </div>
+      <div class="chapter-visual">
+        <div class="frame frame-square">
+          <img src="photos/hobby-rs-competition.jpg" alt="RS Innovators Championship certificate" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VOID 2 ============ -->
+  <section class="void">
+    <div class="marker">Then <em>code</em>.</div>
+    <div class="sub">From language to systems</div>
+  </section>
+
+  <!-- ============ CHAPTER 4 — LMU Software Dev 2023-2024 ============ -->
+  <section id="chapter-4">
+    <div class="chapter reverse">
+      <div class="chapter-text">
+        <div class="year">Oct 2023 &mdash; Feb 2024 &middot; Chapter 04</div>
+        <h2>Team <em>lead</em>.</h2>
+        <p class="lead">
+          For the LMU Software Development Project I led a student team that built
+          &ldquo;Ticket to Ride&rdquo; and a small chat application. I handled task distribution
+          and sprint planning, and wrote the backend logic in Python with Pygame. We used
+          GitLab for version control and shipped everything on time.
+        </p>
+        <div class="tags">
+          <span>Team Lead</span>
+          <span>Backend &middot; Python + Pygame</span>
+          <span>GitLab</span>
+          <span>Scrum</span>
+        </div>
+      </div>
+      <div class="chapter-visual">
+        <div class="frame frame-wide">
+          <img src="photos/chapter-ticket-to-ride.png" alt="Ticket to Ride board game" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHAPTER 5 — Messe München 2024-2025 ============ -->
+  <section id="chapter-5">
+    <div class="chapter">
+      <div class="chapter-text">
+        <div class="year">Sep 2024 &mdash; Aug 2025 &middot; Chapter 05</div>
+        <h2>IT <em>demand</em>.</h2>
+        <p class="lead">
+          At Messe M&uuml;nchen I was the first point of contact between the business departments and IT delivery.
+          I worked on the Salesforce stabilization concept, set up test environments, and did error analysis.
+          The project I&rsquo;m most proud of is a fully automated approval workflow I built on top of an existing
+          Access database: VBA exports the data, an email kicks off the approval, and Power Automate handles the rest.
+          It cut a lot of manual work out of the process.
+        </p>
+        <div class="tags">
+          <span>Messe M&uuml;nchen</span>
+          <span>Requirements Engineering</span>
+          <span>Salesforce</span>
+          <span>Power Automate &middot; VBA</span>
+        </div>
+      </div>
+      <div class="chapter-visual">
+        <div class="frame frame-wide">
+          <img src="photos/chapter-messe-muenchen.png" alt="Messe M&uuml;nchen Eingang West" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHAPTER 6 — Bachelor Thesis 2025 ============ -->
+  <section id="chapter-6">
+    <div class="chapter reverse">
+      <div class="chapter-text">
+        <div class="year">Mar 2025 &mdash; Jul 2025 &middot; Chapter 06</div>
+        <h2>Bachelor <em>thesis</em>.</h2>
+        <p class="lead">
+          My thesis was called &laquo;Evaluating Back-Translation as a Strategy for Multi-Reference Generation
+          in Text Simplification&raquo;, supervised by Prof. Dr. Barbara Plank. I designed a human evaluation
+          protocol with Likert ratings for Meaning, Fluency, Simplicity, and Diversity, applied SARI and BERTScore,
+          and ran the correlation analysis. To collect the human ratings I built a small interactive rating platform
+          in Streamlit.
+        </p>
+        <div class="tags">
+          <span>LMU &middot; Prof. Plank</span>
+          <span>Back-Translation</span>
+          <span>SARI &middot; BERTScore</span>
+          <span>Streamlit</span>
+        </div>
+      </div>
+      <div class="chapter-visual">
+        <div class="frame frame-square">
+          <img src="photos/chapter-bachelor-thesis.png" alt="Bachelor thesis" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VOID 3 ============ -->
+  <section class="void">
+    <div class="marker">And <em>now</em>.</div>
+    <div class="sub">Allianz &middot; Nov 2025 &rarr; Present</div>
+  </section>
+
+  <!-- ============ CHAPTER 7 — Allianz 2025-Present ============ -->
+  <section id="chapter-7">
+    <div class="chapter">
+      <div class="chapter-text">
+        <div class="year">Nov 2025 &mdash; Present &middot; Chapter 07</div>
+        <h2>Allianz &middot; <em>GenAI</em>.</h2>
+        <p class="lead">
+          I&rsquo;m currently a Werkstudentin in Process Intelligence &amp; Innovation.
+          My work centers on evaluating vision and multimodal AI models for internal proof-of-concept projects,
+          covering things like object detection, image-text alignment and metadata extraction.
+          I designed the evaluation matrix we use to compare AI solutions against accuracy, scalability,
+          integration effort and compliance. On the side I ran an internal Claude Code workshop
+          to help my team pick up AI-assisted development.
+        </p>
+        <div class="tags">
+          <span>Allianz Versicherung</span>
+          <span>Process Intelligence</span>
+          <span>Vision &amp; Multimodal AI</span>
+          <span>Claude Code Workshop</span>
+          <span>Additional Studies: BWL 50 ECTS</span>
+        </div>
+      </div>
+      <div class="chapter-visual">
+        <div class="frame frame-wide">
+          <img src="photos/chapter-allianz-team.jpeg" alt="Allianz Process Intelligence &amp; Innovation team lunch" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CERTIFICATIONS ============ -->
+  <section id="certifications">
+    <div class="narrative" style="margin-bottom: 60px;">
+      <p class="quote" style="font-size: clamp(28px, 3.5vw, 48px); margin-bottom: 0;">
+        Papers on the <em>wall</em>.
+      </p>
+    </div>
+
+    <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px;">
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="frame" style="aspect-ratio: 4 / 3; border-radius: 6px; background: #fff;">
+          <img src="photos/cert-dsh-zeugnis.png" alt="DSH-Zeugnis, LMU M&uuml;nchen" style="width:100%; height:100%; object-fit: contain; padding: 12px; filter: none;" />
+        </div>
+        <div>
+          <div style="font-family:'Satoshi'; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color: var(--mute); margin-bottom: 6px;">21.07.2022 &middot; M&uuml;nchen</div>
+          <h3 style="font-family:'Clash Display'; font-weight:700; font-size:24px; letter-spacing:-0.02em; margin-bottom: 8px;">DSH-Zeugnis</h3>
+          <p style="font-size:14px; line-height:1.6; color: var(--ink-soft);">
+            Deutsche Sprachpr&uuml;fung f&uuml;r den Hochschulzugang &mdash; DSH 2.
+            LMU M&uuml;nchen. Ergebnis: H&ouml;ren 57 % &middot; Textproduktion 63 % &middot; Lesen 88 % &middot; Wissenschaftssprache 78 % &middot; M&uuml;ndlich 74 %.
+          </p>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="frame" style="aspect-ratio: 4 / 3; border-radius: 6px; background: #fff;">
+          <img src="photos/cert-scrum-psm1.png" alt="Professional Scrum Master I" style="width:100%; height:100%; object-fit: contain; padding: 12px; filter: none;" />
+        </div>
+        <div>
+          <div style="font-family:'Satoshi'; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color: var(--mute); margin-bottom: 6px;">11.01.2025 &middot; Scrum.org</div>
+          <h3 style="font-family:'Clash Display'; font-weight:700; font-size:24px; letter-spacing:-0.02em; margin-bottom: 8px;">Professional Scrum Master I</h3>
+          <p style="font-size:14px; line-height:1.6; color: var(--ink-soft);">
+            Certified during Werkstudentin role at Messe M&uuml;nchen IT Demand Management.
+            Foundational Scrum mastery: framework, terminology, and consistent application to cross-functional delivery.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="max-width: 1200px; margin: 60px auto 0; padding-top: 40px; border-top: 1px solid rgba(30, 30, 30, 0.1);">
+      <div style="font-family:'Satoshi'; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color: var(--mute); margin-bottom: 16px;">Also on file</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <span style="padding: 8px 16px; border: 1px solid rgba(30,30,30,0.15); border-radius: 999px; font-size: 12px; letter-spacing: 0.05em;">Claude Certified Architect &middot; Foundations (CCA-F)</span>
+        <span style="padding: 8px 16px; border: 1px solid rgba(30,30,30,0.15); border-radius: 999px; font-size: 12px; letter-spacing: 0.05em;">English Proficiency CPE (B2&ndash;C1)</span>
+        <span style="padding: 8px 16px; border: 1px solid rgba(30,30,30,0.15); border-radius: 999px; font-size: 12px; letter-spacing: 0.05em;">TestDaF &middot; 2021</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VOID 4 — into network ============ -->
+  <section class="void">
+    <div class="marker">The <em>network</em>.</div>
+    <div class="sub">Conferences &middot; European Young Engineers &middot; 2025</div>
+  </section>
+
+  <!-- ============ NETWORK SECTION ============ -->
+  <section id="network">
+    <div class="narrative" style="margin-bottom: 60px;">
+      <p class="quote" style="font-size: clamp(28px, 3.5vw, 48px); margin-bottom: 0;">
+        European Young Engineers &amp; <em>conferences</em>.
+      </p>
+    </div>
+    <div class="showcase">
+      <div class="card large">
+        <img src="photos/hobby-eye-annual.jpg" alt="European Young Engineers annual meeting" />
+      </div>
+      <div class="card pill">
+        <img src="photos/hobby-portrait-conference.png" alt="Conference portrait" />
+      </div>
+      <div class="card circle">
+        <img src="photos/hobby-eye-nadja.jpg" alt="With EYE president Nadja Yang" />
+      </div>
+      <div class="card wide">
+        <img src="photos/hobby-eye-philips.jpg" alt="EYE visit at Philips headquarters" />
+      </div>
+    </div>
+    <div style="max-width: 900px; margin: 60px auto 0; text-align: center; color: var(--ink-soft); font-size: 15px; line-height: 1.7;">
+      <p>I&rsquo;m active in <strong>European Young Engineers</strong>, which is where the photos above are from:
+      our annual gathering, a visit to Philips HQ, and meeting our president Nadja Yang.
+      It&rsquo;s a nice way to zoom out from Allianz and see how other companies across Europe think about engineering.</p>
+    </div>
+  </section>
+
+  <!-- ============ VOID — into freelance ============ -->
+  <section class="void">
+    <div class="marker">Side <em>income</em>.</div>
+    <div class="sub">Freelance &middot; Translation &middot; Live TV</div>
+  </section>
+
+  <!-- ============ FREELANCE / PAID SIDE WORK ============ -->
+  <section id="freelance">
+    <div class="narrative" style="margin-bottom: 60px;">
+      <p class="quote" style="font-size: clamp(28px, 3.5vw, 48px); margin-bottom: 0;">
+        Paid on the <em>side</em>.
+      </p>
+      <p style="font-size: 15px; line-height: 1.6; color: var(--mute); margin-top: 20px; max-width: 640px; margin-left: auto; margin-right: auto;">
+        These are real freelance jobs I did alongside my studies. Bilingual work that trained my
+        negotiation skills faster than any classroom could.
+      </p>
+    </div>
+
+    <div class="showcase" style="margin-bottom: 24px;">
+      <div class="card large">
+        <img src="photos/hobby-messe-translator.jpg" alt="Trade fair translator, Germany" />
+      </div>
+      <div class="card pill">
+        <img src="photos/hobby-tvshow-cast.jpg" alt="Chinese TV show cast, Jiangsu Media" />
+      </div>
+    </div>
+
+    <div class="showcase">
+      <div class="card wide" style="display: flex; flex-direction: column; overflow: visible; background: transparent;">
+        <div style="aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: var(--gray-3); position: relative;">
+          <img src="photos/hobby-tvshow-desimone-cropped.png" alt="With Robert Desimone (MIT McGovern Institute) on set of &laquo;World&rsquo;s Strongest Brain International&raquo;" style="width:100%; height:100%; object-fit: cover;" />
+        </div>
+        <div style="margin-top: 14px; padding: 0 4px;">
+          <div style="font-family:'Satoshi'; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mute); margin-bottom: 4px;">
+            Center: Prof. Robert Desimone
+          </div>
+          <div style="font-size: 12px; line-height: 1.5; color: var(--ink-soft);">
+            Neuroscientist, member of the U.S. National Academy of Sciences,
+            Director of the McGovern Institute for Brain Research at MIT.
+            Guest expert on &laquo;World&rsquo;s Strongest Brain International&raquo;.
+          </div>
+        </div>
+      </div>
+      <div class="card circle">
+        <img src="photos/hobby-business-event.jpg" alt="Business event organisation" />
+      </div>
+    </div>
+
+    <div style="max-width: 1200px; margin: 80px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; padding: 0 20px;">
+      <div>
+        <h3 style="font-family:'Clash Display'; font-weight:700; font-size:20px; letter-spacing:-0.02em; margin-bottom:10px;">Trade fair translator</h3>
+        <p style="font-size:14px; line-height:1.55; color:var(--ink-soft);">Two years with Guangzhou Huan Yu, translating for Chinese exhibitors at trade fairs in Germany. I did live interpretation between Chinese, German and English, and handled negotiation on the exhibitors&rsquo; behalf.</p>
+      </div>
+      <div>
+        <h3 style="font-family:'Clash Display'; font-weight:700; font-size:20px; letter-spacing:-0.02em; margin-bottom:10px;">TV agent &amp; translator</h3>
+        <p style="font-size:14px; line-height:1.55; color:var(--ink-soft);">For Jiangsu Media I worked as a contracted agent and translator on &laquo;World&rsquo;s Strongest Brain International&raquo;, coordinating between foreign contestants and the production team.</p>
+      </div>
+      <div>
+        <h3 style="font-family:'Clash Display'; font-weight:700; font-size:20px; letter-spacing:-0.02em; margin-bottom:10px;">Business events</h3>
+        <p style="font-size:14px; line-height:1.55; color:var(--ink-soft);">I co-organise Chinese-German business events, handling bilingual moderation, guest coordination and the usual on-site logistics.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VOID — into hobbies ============ -->
+  <section class="void">
+    <div class="marker">Off <em>hours</em>.</div>
+    <div class="sub">Culture &middot; travel &middot; football</div>
+  </section>
+
+  <!-- ============ HOBBIES — culture + football ============ -->
+  <section id="hobbies">
+    <div class="narrative" style="margin-bottom: 80px;">
+      <p class="quote" style="font-size: clamp(28px, 3.5vw, 48px); margin-bottom: 0;">
+        What I do for <em>myself</em>.
+      </p>
+    </div>
+
+    <!-- Hobby 1: Culture & travel — the ambient map -->
+    <div class="map-embed" id="map" style="min-height: 90vh; margin-bottom: 100px;">
+      <div class="map-canvas">
+        <iframe src="europe-embed.html" title="Europe ambient map" loading="lazy"></iframe>
+      </div>
+      <div class="map-copy">
+        <div class="kicker">Hobby 01 &middot; Culture &amp; travel</div>
+        <h2 class="headline">Europe as <em>classroom</em>.</h2>
+        <p class="lead">
+          I love travelling around Europe on weekends. Every city I&rsquo;ve been to
+          has taught me something different about the way people live, cook, argue
+          and switch off. It&rsquo;s also where my German really started to sound like me.
+        </p>
+        <div class="stats">
+          <div><span class="num">16</span><span class="lbl">Cities</span></div>
+          <div><span class="num">8</span><span class="lbl">Countries</span></div>
+          <div><span class="num">6</span><span class="lbl">Years</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hobby 2: Football -->
+    <div style="max-width: 1400px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 40px;">
+        <div style="font-family:'Satoshi'; font-size:11px; letter-spacing:0.35em; text-transform:uppercase; color: var(--mute); margin-bottom: 12px;">
+          Hobby 02 &middot; Sport
+        </div>
+        <h2 style="font-family:'Clash Display'; font-weight:700; font-size: clamp(36px, 5vw, 68px); letter-spacing:-0.03em; line-height: 1.02;">
+          Fu&szlig;ball on <em style="font-family:'Times New Roman', serif; font-style: italic; font-weight: 400;">Tuesdays</em>.
+        </h2>
+      </div>
+
+      <div class="showcase">
+        <div class="card wide" style="grid-column: span 12; aspect-ratio: 16/7;">
+          <img src="photos/hobby-soccer.jpg" alt="Playing football with the Munich team" />
+        </div>
+      </div>
+
+      <div style="max-width: 720px; margin: 40px auto 0; text-align: center;">
+        <p style="font-size:15px; line-height:1.6; color:var(--ink-soft);">
+          I play weekly with a mixed team in Munich. It&rsquo;s the one place
+          where nobody talks about my job title, my thesis or my roadmap.
+          Ninety minutes to run around and reset.
+        </p>
+      </div>
+    </div>
+
+    <!-- Hobby 03: Vibe Coding -->
+    <div style="max-width: 1400px; margin: 120px auto 0;">
+      <div style="text-align: center; margin-bottom: 40px;">
+        <div style="font-family:'Satoshi'; font-size:11px; letter-spacing:0.35em; text-transform:uppercase; color: var(--mute); margin-bottom: 12px;">
+          Hobby 03 &middot; Building
+        </div>
+        <h2 style="font-family:'Clash Display'; font-weight:700; font-size: clamp(36px, 5vw, 68px); letter-spacing:-0.03em; line-height: 1.02;">
+          Vibe <em style="font-family:'Times New Roman', serif; font-style: italic; font-weight: 400;">coding</em>.
+        </h2>
+      </div>
+
+      <div style="max-width: 720px; margin: 0 auto; text-align: center;">
+        <p style="font-size:16px; line-height:1.7; color:var(--ink-soft); margin-bottom: 40px;">
+          Since the start of 2026 I&rsquo;ve been vibe coding pretty much every day.
+          Little tools, weird prototypes, half-finished ideas that get finished the next weekend.
+          It&rsquo;s how I keep my hands warm and my thinking sharp outside of work,
+          and honestly the fastest way I&rsquo;ve found to learn a new stack.
+        </p>
+
+        <a href="https://github.com/yueouLi" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 12px; padding: 14px 26px; border: 1px solid var(--ink); border-radius: 999px; color: var(--ink); text-decoration: none; font-family: 'Satoshi'; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; transition: all 200ms;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.9 5.6-5.5 5.9.5.4.9 1.2.9 2.4v3.6c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+          github.com/yueouLi
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VOID FINAL ============ -->
+  <section class="void">
+    <div class="marker">Next <em>chapter</em>.</div>
+    <div class="sub">Looking for a Forward Deployed Engineer role</div>
+  </section>
+
+  <!-- ============ CLOSING CTA ============ -->
+  <section id="cta">
+    <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+      <div style="font-family:'Satoshi', sans-serif; font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--mute); margin-bottom: 24px;">
+        What I'm looking for
+      </div>
+      <h2 style="font-family:'Clash Display'; font-weight:700; font-size: clamp(40px, 5.5vw, 76px); letter-spacing:-0.03em; line-height: 1.02; margin-bottom: 32px;">
+        Forward Deployed <em style="font-family:'Times New Roman', serif; font-style: italic; font-weight: 400;">Engineer</em>.
+      </h2>
+      <p style="font-size: 18px; line-height: 1.7; color: var(--ink-soft); max-width: 640px; margin: 0 auto 48px;">
+        What I&rsquo;m looking for is a role where I get to work close to a customer team,
+        understand the way they actually operate, and then help them ship something that works.
+        My background sits somewhere between business, engineering and language, and that mix is
+        exactly what I&rsquo;d love to keep using every day.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 60px; text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+        <div style="padding: 24px; border: 1px solid rgba(30,30,30,0.12); border-radius: 8px;">
+          <div style="font-family:'Clash Display'; font-weight:700; font-size:14px; letter-spacing:0.1em; text-transform: uppercase; margin-bottom: 8px;">Business side</div>
+          <p style="font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 0;">Comfortable owning requirements engineering, stakeholder mapping, decision templates and internal workshops.</p>
+        </div>
+        <div style="padding: 24px; border: 1px solid rgba(30,30,30,0.12); border-radius: 8px;">
+          <div style="font-family:'Clash Display'; font-weight:700; font-size:14px; letter-spacing:0.1em; text-transform: uppercase; margin-bottom: 8px;">Engineering side</div>
+          <p style="font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 0;">Day-to-day Python, AI and ML prototyping, Streamlit, Power Automate, VBA, Bash, Git.</p>
+        </div>
+        <div style="padding: 24px; border: 1px solid rgba(30,30,30,0.12); border-radius: 8px;">
+          <div style="font-family:'Clash Display'; font-weight:700; font-size:14px; letter-spacing:0.1em; text-transform: uppercase; margin-bottom: 8px;">Working languages</div>
+          <p style="font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 0;">German (C1&ndash;C2), Mandarin (C2), English (B2&ndash;C1). Plenty of practice moving between DACH and China contexts.</p>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <a href="mailto:lyoleonie@gmail.com" style="display: inline-block; padding: 16px 32px; background: var(--ink); color: var(--bg); text-decoration: none; border-radius: 999px; font-family:'Satoshi'; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; transition: all 200ms;">
+          Get in touch &nearr;
+        </a>
+        <a href="https://github.com/yueouLi" target="_blank" rel="noopener" style="display: inline-block; padding: 16px 32px; background: transparent; color: var(--ink); text-decoration: none; border-radius: 999px; font-family:'Satoshi'; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; border: 1px solid var(--ink); transition: all 200ms;">
+          GitHub
+        </a>
+      </div>
+
+      <div style="margin-top: 40px; display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; font-family: 'Satoshi'; font-size: 13px; color: var(--ink-soft);">
+        <span>lyoleonie@gmail.com</span>
+        <span style="color: var(--mute);">&middot;</span>
+        <span>+49 15228031531</span>
+        <span style="color: var(--mute);">&middot;</span>
+        <span>Munich, Germany</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="footer">
+  <div class="grid">
+    <div class="brand-summary">
+      <h4>Leonie Li <span style="color: var(--mute); font-weight: 400; font-family: 'Satoshi', sans-serif; font-size: 13px;">(Yueou Li)</span></h4>
+      <p>Werkstudentin at Allianz Process Intelligence &amp; Innovation. Computational Linguistics at LMU M&uuml;nchen.
+      Bridging Chinese-German contexts and translating between business needs and technical solutions.</p>
+    </div>
+    <div>
+      <h4>Chapters</h4>
+      <a href="#chapter-1">01 Jilin</a>
+      <a href="#chapter-2">02 LMU</a>
+      <a href="#chapter-3">03 RS &middot; Media</a>
+      <a href="#chapter-4">04 Team Lead</a>
+      <a href="#chapter-5">05 Messe</a>
+      <a href="#chapter-6">06 Thesis</a>
+      <a href="#chapter-7">07 Allianz</a>
+    </div>
+    <div>
+      <h4>Elsewhere</h4>
+      <a href="https://github.com/yueouLi" target="_blank" rel="noopener">GitHub</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Xiaohongshu</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <a href="mailto:lyoleonie@gmail.com">lyoleonie@gmail.com</a>
+      <a href="tel:+4915228031531">+49 152 28031531</a>
+      <p style="margin-top: 8px;">Munich, Germany</p>
+    </div>
+  </div>
+  <div class="signature">
+    <div>&copy; 2026 Leonie Li (Yueou Li)</div>
+    <div>Made with Three.js &middot; Type by Fontshare</div>
+  </div>
+</footer>
+
+<div class="scroll-hint">Scroll</div>
+
+<!-- ============ Music Player ============ -->
+<div class="music-player" id="musicPlayer" role="button" aria-label="Toggle music">
+  <div class="btn">
+    <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+  </div>
+  <div class="meta">
+    <div class="label">Now Playing</div>
+    <div class="track" id="trackName">Ambient &middot; Journey</div>
+  </div>
+  <div class="bars"><span></span><span></span><span></span><span></span></div>
+</div>
+
+<audio id="bgAudio" loop preload="auto">
+  <source src="music/journey.mp3" type="audio/mpeg" />
+  <source src="music/journey.ogg" type="audio/ogg" />
+</audio>
+
+<script>
+(function() {
+  const audio = document.getElementById('bgAudio');
+  const player = document.getElementById('musicPlayer');
+  const trackName = document.getElementById('trackName');
+
+  // Fallback: if no music file, generate ambient drone via Web Audio API
+  let synthCtx = null;
+  let synthNodes = null;
+
+  function createSynthDrone() {
+    if (synthCtx) return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    synthCtx = new AudioCtx();
+
+    const master = synthCtx.createGain();
+    master.gain.value = 0;
+    master.connect(synthCtx.destination);
+
+    // Three sine oscillators — soft ambient chord
+    const freqs = [110, 165, 220, 275]; // A2, E3, A3, C#4
+    const oscs = [];
+    const gains = [];
+
+    freqs.forEach((f, i) => {
+      const osc = synthCtx.createOscillator();
+      osc.type = i === 0 ? 'sine' : 'triangle';
+      osc.frequency.value = f;
+
+      const gain = synthCtx.createGain();
+      gain.gain.value = 0.08 - i * 0.015;
+
+      // slow LFO on each oscillator's gain
+      const lfo = synthCtx.createOscillator();
+      lfo.frequency.value = 0.05 + i * 0.03;
+      const lfoGain = synthCtx.createGain();
+      lfoGain.gain.value = 0.04;
+      lfo.connect(lfoGain);
+      lfoGain.connect(gain.gain);
+      lfo.start();
+
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start();
+      oscs.push(osc);
+      gains.push(gain);
+    });
+
+    // Soft lowpass for warmth
+    const filter = synthCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 800;
+    master.disconnect();
+    master.connect(filter);
+    filter.connect(synthCtx.destination);
+
+    synthNodes = { master, oscs, gains, filter };
+    trackName.textContent = 'Generative · Drone';
+  }
+
+  function fadeSynth(target, duration = 1.5) {
+    if (!synthNodes) return;
+    const now = synthCtx.currentTime;
+    synthNodes.master.gain.cancelScheduledValues(now);
+    synthNodes.master.gain.setValueAtTime(synthNodes.master.gain.value, now);
+    synthNodes.master.gain.linearRampToValueAtTime(target, now + duration);
+  }
+
+  let usingSynth = false;
+  let playing = false;
+
+  audio.addEventListener('error', () => { usingSynth = true; });
+
+  player.addEventListener('click', async () => {
+    playing = !playing;
+    player.classList.toggle('playing', playing);
+
+    if (playing) {
+      // Try real audio first
+      try {
+        await audio.play();
+        usingSynth = false;
+      } catch (e) {
+        usingSynth = true;
+      }
+
+      if (usingSynth) {
+        createSynthDrone();
+        if (synthCtx && synthCtx.state === 'suspended') await synthCtx.resume();
+        fadeSynth(0.4, 2);
+      }
+    } else {
+      if (usingSynth) {
+        fadeSynth(0, 1.2);
+      } else {
+        audio.pause();
+      }
+    }
+  });
+
+  // Pause when tab hidden
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && playing) {
+      if (usingSynth) fadeSynth(0, 0.5);
+      else audio.pause();
+    } else if (!document.hidden && playing) {
+      if (usingSynth) fadeSynth(0.4, 1);
+      else audio.play().catch(() => {});
+    }
+  });
+})();
+</script>
+
+<!-- ============ Three.js Scene ============ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xf2f2f2, 10, 60);
+
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  300
+);
+camera.position.set(0, 0, 10);
+
+// ================================================================
+// TIMELINE SPINE — long, dramatic 3D curve
+// ================================================================
+const spinePoints = [];
+const chapterCount = 10;
+for (let i = 0; i < chapterCount; i++) {
+  spinePoints.push(new THREE.Vector3(
+    Math.sin(i * 1.3) * 6,
+    -i * 8,
+    Math.cos(i * 0.9) * 4 - 2
+  ));
+}
+const spineCurve = new THREE.CatmullRomCurve3(spinePoints);
+spineCurve.tension = 0.4;
+
+// Visible spine as a subtle ribbon
+const spineGeo = new THREE.TubeGeometry(spineCurve, 400, 0.006, 8, false);
+const spineMat = new THREE.MeshBasicMaterial({
+  color: 0x111111, transparent: true, opacity: 0.25
+});
+scene.add(new THREE.Mesh(spineGeo, spineMat));
+
+// ================================================================
+// PORTAL RINGS — huge concentric rings the camera flies through
+// ================================================================
+const portals = [];
+const portalCount = 8;
+for (let i = 0; i < portalCount; i++) {
+  const t = 0.08 + i * (0.85 / portalCount);
+  const pos = spineCurve.getPoint(t);
+  const tangent = spineCurve.getTangent(t);
+
+  const portalGroup = new THREE.Group();
+  portalGroup.position.copy(pos);
+  portalGroup.lookAt(pos.clone().add(tangent));
+
+  // outer thin ring
+  const r1 = new THREE.Mesh(
+    new THREE.RingGeometry(2.5, 2.52, 128),
+    new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
+  );
+  portalGroup.add(r1);
+
+  // second ring
+  const r2 = new THREE.Mesh(
+    new THREE.RingGeometry(2.0, 2.015, 128),
+    new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+  );
+  portalGroup.add(r2);
+
+  // inner tiny ring
+  const r3 = new THREE.Mesh(
+    new THREE.RingGeometry(1.4, 1.41, 128),
+    new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+  );
+  portalGroup.add(r3);
+
+  // tick marks around the outer ring
+  for (let j = 0; j < 24; j++) {
+    const angle = (j / 24) * Math.PI * 2;
+    const tick = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.15, 0.02),
+      new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.35 })
+    );
+    tick.position.set(Math.cos(angle) * 2.7, Math.sin(angle) * 2.7, 0);
+    tick.rotation.z = angle;
+    portalGroup.add(tick);
+  }
+
+  portalGroup.userData = { baseRotZ: portalGroup.rotation.z, spin: (i % 2 ? 1 : -1) * 0.15 };
+  scene.add(portalGroup);
+  portals.push(portalGroup);
+}
+
+// ================================================================
+// FLOATING PHOTO CARDS in 3D space
+// ================================================================
+const photoCards = [];
+const yearLabels = ['2019', '2021', '2022', '2023', '2024', '2025', '2026'];
+
+// Procedural placeholder texture generator (canvas-based)
+function makePlaceholderTexture(label, seed) {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 640;
+  const ctx = c.getContext('2d');
+
+  // gradient bg
+  const g = ctx.createLinearGradient(0, 0, 512, 640);
+  const shade = 200 + (seed * 37 % 40);
+  g.addColorStop(0, `rgb(${shade},${shade},${shade})`);
+  g.addColorStop(1, `rgb(${shade - 30},${shade - 30},${shade - 30})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 512, 640);
+
+  // diagonal hatching
+  ctx.strokeStyle = 'rgba(30,30,30,0.08)';
+  ctx.lineWidth = 2;
+  for (let i = -640; i < 512; i += 24) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + 640, 640);
+    ctx.stroke();
+  }
+
+  // border
+  ctx.strokeStyle = 'rgba(17,17,17,0.6)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(12, 12, 488, 616);
+
+  // label
+  ctx.fillStyle = '#111';
+  ctx.font = 'bold 72px "Clash Display", system-ui';
+  ctx.fillText(label, 30, 100);
+
+  ctx.fillStyle = 'rgba(17,17,17,0.6)';
+  ctx.font = '20px "Satoshi", system-ui';
+  ctx.fillText('CHAPTER', 30, 620);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.anisotropy = 4;
+  return tex;
+}
+
+for (let i = 0; i < 18; i++) {
+  const t = 0.05 + (i / 18) * 0.9;
+  const basePos = spineCurve.getPoint(t);
+  const tangent = spineCurve.getTangent(t);
+
+  // scatter off the spine
+  const offsetSide = (i % 2 === 0 ? 1 : -1) * (2.5 + Math.random() * 3);
+  const offsetVertical = (Math.random() - 0.5) * 1.5;
+  const offsetForward = (Math.random() - 0.5) * 1.5;
+
+  const label = yearLabels[Math.min(yearLabels.length - 1, Math.floor(i / 3))];
+  const tex = makePlaceholderTexture(label, i);
+
+  const cardGeo = new THREE.PlaneGeometry(1.4, 1.75);
+  const cardMat = new THREE.MeshBasicMaterial({
+    map: tex,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.92
+  });
+  const card = new THREE.Mesh(cardGeo, cardMat);
+
+  card.position.set(
+    basePos.x + offsetSide,
+    basePos.y + offsetVertical,
+    basePos.z + offsetForward
+  );
+
+  // face roughly toward spine
+  card.lookAt(basePos);
+  card.rotation.z = (Math.random() - 0.5) * 0.3;
+
+  card.userData = {
+    basePos: card.position.clone(),
+    floatSpeed: 0.4 + Math.random() * 0.6,
+    floatAmp: 0.15 + Math.random() * 0.2,
+    rotSpeed: (Math.random() - 0.5) * 0.002,
+    phase: Math.random() * Math.PI * 2
+  };
+
+  scene.add(card);
+  photoCards.push(card);
+}
+
+// ================================================================
+// GRID FLOOR — infinite perspective
+// ================================================================
+const gridSize = 100;
+const gridDivs = 40;
+const grid = new THREE.GridHelper(gridSize, gridDivs, 0x111111, 0x111111);
+grid.material.transparent = true;
+grid.material.opacity = 0.08;
+grid.position.y = -30;
+scene.add(grid);
+
+const grid2 = new THREE.GridHelper(gridSize, gridDivs, 0x111111, 0x111111);
+grid2.material.transparent = true;
+grid2.material.opacity = 0.05;
+grid2.position.y = 20;
+grid2.rotation.x = Math.PI;
+scene.add(grid2);
+
+// ================================================================
+// PARTICLE STREAKS — long thin lines that streak past the camera
+// ================================================================
+const streakCount = 60;
+const streakGroup = new THREE.Group();
+scene.add(streakGroup);
+
+for (let i = 0; i < streakCount; i++) {
+  const len = 0.4 + Math.random() * 1.2;
+  const streakGeo = new THREE.PlaneGeometry(0.006, len);
+  const streakMat = new THREE.MeshBasicMaterial({
+    color: 0x111111,
+    transparent: true,
+    opacity: 0.15 + Math.random() * 0.25
+  });
+  const streak = new THREE.Mesh(streakGeo, streakMat);
+  streak.position.set(
+    (Math.random() - 0.5) * 20,
+    (Math.random() - 0.5) * 50 - 20,
+    (Math.random() - 0.5) * 8 - 2
+  );
+  streak.userData = {
+    speed: 0.05 + Math.random() * 0.12,
+    resetY: 30
+  };
+  streakGroup.add(streak);
+}
+
+// ================================================================
+// DUST PARTICLES
+// ================================================================
+const particleGeo = new THREE.BufferGeometry();
+const particleCount = 800;
+const positions = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount; i++) {
+  positions[i * 3 + 0] = (Math.random() - 0.5) * 40;
+  positions[i * 3 + 1] = (Math.random() - 0.5) * 60 - 20;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 20 - 4;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({
+  color: 0x111111, size: 0.025, transparent: true, opacity: 0.4, sizeAttenuation: true
+}));
+scene.add(particles);
+
+// ================================================================
+// BIG YEAR NUMBERS floating in 3D near each portal
+// ================================================================
+function makeYearTexture(year) {
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 512;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 1024, 512);
+  ctx.fillStyle = 'rgba(17,17,17,0.85)';
+  ctx.font = 'bold 380px "Clash Display", system-ui';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.fillText(year, 512, 260);
+  const tex = new THREE.CanvasTexture(c);
+  tex.anisotropy = 8;
+  return tex;
+}
+
+const yearMeshes = [];
+const years = ['2019', '2021', '2022', '2023', '2024', '2025', '2026'];
+years.forEach((y, i) => {
+  const t = 0.08 + i * (0.85 / years.length);
+  const pos = spineCurve.getPoint(t);
+  const tangent = spineCurve.getTangent(t);
+
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(4, 2),
+    new THREE.MeshBasicMaterial({ map: makeYearTexture(y), transparent: true, opacity: 0.75 })
+  );
+  mesh.position.copy(pos);
+  mesh.position.y += 3;
+  mesh.position.x += (i % 2 ? -3 : 3);
+  mesh.lookAt(pos);
+  mesh.userData = { phase: i * 0.7 };
+  scene.add(mesh);
+  yearMeshes.push(mesh);
+});
+
+// ================================================================
+// SCROLL + INPUT
+// ================================================================
+let scrollProgress = 0;
+let targetScroll = 0;
+
+function updateScroll() {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  targetScroll = docHeight > 0 ? scrollTop / docHeight : 0;
+}
+window.addEventListener('scroll', updateScroll, { passive: true });
+
+const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+window.addEventListener('mousemove', (e) => {
+  mouse.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouse.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ================================================================
+// ANIMATION LOOP
+// ================================================================
+const clock = new THREE.Clock();
+const camLookTarget = new THREE.Vector3();
+const camUp = new THREE.Vector3(0, 1, 0);
+
+function tick() {
+  const t = clock.getElapsedTime();
+
+  // Smooth scroll + mouse
+  scrollProgress += (targetScroll - scrollProgress) * 0.06;
+  mouse.x += (mouse.tx - mouse.x) * 0.05;
+  mouse.y += (mouse.ty - mouse.y) * 0.05;
+
+  // ---------- Camera on spine (with roll) ----------
+  const camT = Math.min(0.97, scrollProgress * 0.94);
+  const camPos = spineCurve.getPoint(camT);
+  const nextT = Math.min(1, camT + 0.02);
+  const lookPos = spineCurve.getPoint(nextT);
+
+  camera.position.set(
+    camPos.x + mouse.x * 0.6,
+    camPos.y + mouse.y * 0.4,
+    camPos.z + 4
+  );
+
+  camLookTarget.copy(lookPos);
+  camera.lookAt(camLookTarget);
+
+  // subtle roll based on scroll velocity + time
+  camera.rotation.z += Math.sin(t * 0.3) * 0.02 + mouse.x * 0.05;
+
+  // ---------- Portals spin ----------
+  portals.forEach((p, i) => {
+    p.rotation.z += p.userData.spin * 0.01;
+    // inner rings counter-rotate
+    if (p.children[1]) p.children[1].rotation.z -= p.userData.spin * 0.02;
+    if (p.children[2]) p.children[2].rotation.z += p.userData.spin * 0.03;
+  });
+
+  // ---------- Floating cards ----------
+  photoCards.forEach((c) => {
+    const u = c.userData;
+    c.position.y = u.basePos.y + Math.sin(t * u.floatSpeed + u.phase) * u.floatAmp;
+    c.position.x = u.basePos.x + Math.cos(t * u.floatSpeed * 0.7 + u.phase) * u.floatAmp * 0.5;
+    c.rotation.z += u.rotSpeed;
+  });
+
+  // ---------- Streaks flying up past camera ----------
+  streakGroup.children.forEach((s) => {
+    s.position.y -= s.userData.speed;
+    if (s.position.y < camera.position.y - 25) {
+      s.position.y = camera.position.y + s.userData.resetY;
+      s.position.x = (Math.random() - 0.5) * 20;
+    }
+  });
+
+  // ---------- Dust drift ----------
+  const pos = particleGeo.attributes.position.array;
+  for (let i = 0; i < particleCount; i++) {
+    pos[i * 3 + 1] += Math.sin(t * 0.4 + i) * 0.002;
+    pos[i * 3 + 0] += Math.cos(t * 0.25 + i) * 0.001;
+  }
+  particleGeo.attributes.position.needsUpdate = true;
+
+  // ---------- Year labels pulse & face camera ----------
+  yearMeshes.forEach((y) => {
+    y.material.opacity = 0.5 + Math.sin(t + y.userData.phase) * 0.25;
+    y.lookAt(camera.position);
+  });
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+
+updateScroll();
+tick();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Traces — Europe · Leonie Li</title>
+
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600&f[]=satoshi@500,400,700,300&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-2: #060810;
+    --ink: #e8ecf1;
+    --dim: #6a7280;
+    --glow: #ffd88a;         /* warm amber points */
+    --glow-2: #ff9a3c;
+    --glow-3: #7fd4ff;       /* cool accent for arcs */
+    --line: rgba(255, 216, 138, 0.9);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: radial-gradient(ellipse at center, #0f1420 0%, #060810 70%, #030509 100%);
+    color: var(--ink);
+    font-family: 'Satoshi', system-ui, sans-serif;
+    font-weight: 400;
+    overflow: hidden;
+    height: 100vh;
+    position: relative;
+  }
+
+  /* subtle vignette */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* animated aurora glow blobs */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .aurora span {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.25;
+    mix-blend-mode: screen;
+    animation: drift 24s ease-in-out infinite;
+  }
+  .aurora span:nth-child(1) { width: 500px; height: 500px; top: 10%; left: 20%;
+    background: radial-gradient(circle, #ff9a3c, transparent 60%); animation-delay: 0s; }
+  .aurora span:nth-child(2) { width: 600px; height: 600px; bottom: 5%; right: 15%;
+    background: radial-gradient(circle, #7fd4ff, transparent 60%); animation-delay: -8s; }
+  .aurora span:nth-child(3) { width: 400px; height: 400px; top: 55%; left: 60%;
+    background: radial-gradient(circle, #ffd88a, transparent 60%); animation-delay: -14s; }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-50px, 30px) scale(0.95); }
+  }
+
+  /* star canvas */
+  #stars {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ============ Header ============ */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 40px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 20;
+    pointer-events: none;
+  }
+  header .title {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  header .subtitle {
+    color: var(--dim);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-weight: 400;
+  }
+  header .meta {
+    text-align: right;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+  header .meta .big {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 56px;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 2px;
+    text-transform: none;
+    display: block;
+    background: linear-gradient(180deg, #fff 0%, #ffd88a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header .meta .row {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+  header .meta .row > div {
+    text-align: right;
+  }
+
+  /* ============ SVG Stage ============ */
+  #stage {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Country fills */
+  .country {
+    fill: rgba(255, 255, 255, 0.015);
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 0.5;
+    transition: all 500ms ease;
+  }
+  .country.visited {
+    fill: rgba(255, 216, 138, 0.06);
+    stroke: rgba(255, 216, 138, 0.35);
+    stroke-width: 0.7;
+    filter: drop-shadow(0 0 8px rgba(255, 216, 138, 0.2));
+  }
+  .country.hover {
+    fill: rgba(255, 216, 138, 0.12);
+  }
+
+  /* Graticule */
+  .graticule {
+    fill: none;
+    stroke: rgba(127, 212, 255, 0.06);
+    stroke-width: 0.4;
+    stroke-dasharray: 2 4;
+  }
+
+  /* ============ Arc flight paths ============ */
+  .arc {
+    fill: none;
+    stroke: url(#arcGradient);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px var(--glow));
+    opacity: 0.75;
+  }
+
+  /* ============ City points ============ */
+  .city-halo {
+    fill: var(--glow);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  .city-halo.lit {
+    animation: haloIn 900ms ease-out both;
+  }
+  @keyframes haloIn {
+    0% { opacity: 0; transform: scale(0.3); }
+    100% { opacity: 0.55; transform: scale(1); }
+  }
+
+  .city-dot {
+    fill: var(--glow);
+    opacity: 0;
+    filter: drop-shadow(0 0 6px var(--glow-2)) drop-shadow(0 0 12px var(--glow));
+  }
+  .city-dot.lit {
+    animation: dotIn 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes dotIn {
+    0% { opacity: 0; transform: scale(0); }
+    60% { opacity: 1; transform: scale(1.6); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .city-core {
+    fill: #fff;
+    opacity: 0;
+  }
+  .city-core.lit {
+    animation: coreIn 700ms ease-out 200ms both;
+  }
+  @keyframes coreIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  /* Shockwave rings */
+  .shock {
+    fill: none;
+    stroke: var(--glow);
+    stroke-width: 1.5;
+    opacity: 0;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+  .shock.fire {
+    animation: shock 2.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes shock {
+    0% { r: 3; stroke-width: 2; opacity: 0.9; }
+    100% { r: 45; stroke-width: 0.2; opacity: 0; }
+  }
+
+  /* Continuous idle pulse */
+  .pulse {
+    fill: none;
+    stroke: var(--glow);
+    stroke-width: 0.8;
+    opacity: 0;
+  }
+  .pulse.active {
+    animation: pulse 3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .pulse.active.d1 { animation-delay: 1s; }
+  .pulse.active.d2 { animation-delay: 2s; }
+  @keyframes pulse {
+    0% { r: 4; stroke-width: 1; opacity: 0.5; }
+    100% { r: 22; stroke-width: 0.1; opacity: 0; }
+  }
+
+  /* Label */
+  .city-label {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    fill: var(--ink);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms ease;
+    text-shadow: 0 0 8px rgba(0,0,0,0.9);
+  }
+  .city-label.lit {
+    opacity: 0.85;
+  }
+  .city-group:hover .city-label {
+    opacity: 1;
+    fill: var(--glow);
+  }
+  .city-group:hover .city-dot {
+    transform: scale(1.4);
+  }
+  .city-group { cursor: pointer; }
+
+  /* Traveller — moving dot along arc */
+  .traveller {
+    fill: #fff;
+    filter: drop-shadow(0 0 8px var(--glow)) drop-shadow(0 0 16px var(--glow-2));
+  }
+
+  /* ============ Tooltip ============ */
+  .tooltip {
+    position: fixed;
+    background: rgba(15, 20, 32, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--ink);
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -140%);
+    transition: opacity 200ms ease;
+    z-index: 30;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 216, 138, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 216, 138, 0.1);
+  }
+  .tooltip strong {
+    display: block;
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    margin-bottom: 3px;
+    letter-spacing: -0.01em;
+    color: var(--glow);
+  }
+  .tooltip .yr {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  /* ============ Legend ============ */
+  .legend {
+    position: fixed;
+    bottom: 40px;
+    left: 48px;
+    z-index: 20;
+    display: flex;
+    gap: 40px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    pointer-events: none;
+  }
+  .legend .col {
+    line-height: 1.9;
+  }
+  .legend .col .label {
+    display: block;
+    color: var(--glow);
+    margin-bottom: 10px;
+    font-family: 'Clash Display', sans-serif;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+  }
+  .legend .col span {
+    display: block;
+    color: rgba(232, 236, 241, 0.55);
+    transition: color 200ms;
+  }
+  .legend .col span.lit {
+    color: var(--ink);
+  }
+
+  /* ============ Controls ============ */
+  .controls {
+    position: fixed;
+    bottom: 40px;
+    right: 48px;
+    z-index: 20;
+    display: flex;
+    gap: 10px;
+  }
+  .controls button {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 216, 138, 0.2);
+    color: var(--ink);
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-family: 'Satoshi', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 250ms ease;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .controls button:hover {
+    background: var(--glow);
+    color: #0a0e14;
+    border-color: var(--glow);
+    box-shadow: 0 0 20px rgba(255, 216, 138, 0.4);
+  }
+
+  /* ============ Loading ============ */
+  #loading {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #060810;
+    z-index: 100;
+    font-family: 'Clash Display', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--dim);
+    transition: opacity 800ms ease;
+  }
+  #loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #loading .dot {
+    display: inline-block;
+    width: 5px; height: 5px;
+    background: var(--glow);
+    border-radius: 50%;
+    margin: 0 3px;
+    animation: loadBlink 1.4s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--glow);
+  }
+  #loading .dot:nth-child(2) { animation-delay: 0.2s; }
+  #loading .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes loadBlink {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  /* Back link */
+  .back {
+    position: fixed;
+    top: 46px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-decoration: none;
+    pointer-events: auto;
+    transition: color 200ms;
+  }
+  .back:hover { color: var(--glow); }
+
+  /* Current-city readout */
+  .readout {
+    position: fixed;
+    top: 50%;
+    left: 48px;
+    transform: translateY(-50%);
+    z-index: 15;
+    color: var(--dim);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    max-width: 200px;
+    line-height: 1.6;
+    opacity: 0;
+    transition: opacity 400ms;
+    pointer-events: none;
+  }
+  .readout.show { opacity: 1; }
+  .readout .num {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--glow);
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .readout .name {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    text-transform: none;
+    line-height: 1;
+    margin: 6px 0 10px;
+  }
+
+  @media (max-width: 900px) {
+    header { padding: 24px; }
+    header .meta .big { font-size: 36px; }
+    header .meta .row { gap: 20px; }
+    .legend { left: 24px; bottom: 24px; gap: 20px; font-size: 9px; }
+    .controls { right: 24px; bottom: 24px; }
+    .controls button { padding: 8px 14px; font-size: 9px; }
+    .readout { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  Charting Europe<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+</div>
+
+<div class="aurora">
+  <span></span><span></span><span></span>
+</div>
+
+<canvas id="stars"></canvas>
+
+<header>
+  <div>
+    <div class="title">Traces · Europe</div>
+    <div class="subtitle">2020 &mdash; 2026</div>
+  </div>
+  <a href="index.html" class="back">&larr; Back</a>
+  <div class="meta">
+    <div class="row">
+      <div>
+        <span class="big">16</span>
+        <span>Cities</span>
+      </div>
+      <div>
+        <span class="big">8</span>
+        <span>Countries</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="readout" id="readout">
+  <span class="num" id="readoutNum">01 / 16</span>
+  <span>Current stop</span>
+  <div class="name" id="readoutName">—</div>
+  <span id="readoutNote">—</span>
+</div>
+
+<svg id="stage" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffd88a" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#ffd88a" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#ff9a3c" stop-opacity="0.1"/>
+    </linearGradient>
+    <radialGradient id="haloGrad">
+      <stop offset="0%" stop-color="#ffd88a" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#ff9a3c" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ff9a3c" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<div class="tooltip" id="tooltip"></div>
+
+<div class="legend">
+  <div class="col">
+    <span class="label">Germany · 5</span>
+    <span data-c="München">München</span>
+    <span data-c="Berlin">Berlin</span>
+    <span data-c="Leipzig">Leipzig</span>
+    <span data-c="Weimar">Weimar</span>
+    <span data-c="NRW">NRW</span>
+  </div>
+  <div class="col">
+    <span class="label">Austria · 2</span>
+    <span data-c="Salzburg">Salzburg</span>
+    <span data-c="Wien">Wien</span>
+  </div>
+  <div class="col">
+    <span class="label">South · 4</span>
+    <span data-c="Barcelona">Barcelona</span>
+    <span data-c="Mallorca">Mallorca</span>
+    <span data-c="Venedig">Venedig</span>
+    <span data-c="Toskana">Toskana</span>
+  </div>
+  <div class="col">
+    <span class="label">West · 3</span>
+    <span data-c="Den Haag">Den Haag</span>
+    <span data-c="Paris">Paris</span>
+    <span data-c="Nice">Nice</span>
+  </div>
+  <div class="col">
+    <span class="label">East · 2</span>
+    <span data-c="Prag">Prag</span>
+    <span data-c="Budapest">Budapest</span>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btnReplay">Replay</button>
+  <button id="btnLabels">Labels</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+
+<script>
+// ============================================================
+// STAR BACKGROUND
+// ============================================================
+(function initStars() {
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars;
+
+  function resize() {
+    W = canvas.width = window.innerWidth * devicePixelRatio;
+    H = canvas.height = window.innerHeight * devicePixelRatio;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    stars = [];
+    const count = Math.floor((W * H) / 12000);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.3 + 0.2,
+        tw: Math.random() * Math.PI * 2,
+        sp: 0.008 + Math.random() * 0.02
+      });
+    }
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function loop(t) {
+    ctx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      s.tw += s.sp;
+      const alpha = 0.35 + Math.sin(s.tw) * 0.35;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * devicePixelRatio, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 240, 200, ${alpha})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+// ============================================================
+// CITIES
+// ============================================================
+const cities = [
+  { name: 'München',    country: 'DE', lon: 11.5820, lat: 48.1351, order: 1,  note: 'Home base · Allianz · LMU' },
+  { name: 'Berlin',     country: 'DE', lon: 13.4050, lat: 52.5200, order: 2,  note: 'Hauptstadt' },
+  { name: 'Leipzig',    country: 'DE', lon: 12.3731, lat: 51.3397, order: 3,  note: 'Saxony' },
+  { name: 'Weimar',     country: 'DE', lon: 11.3235, lat: 50.9795, order: 4,  note: 'Goethe · Bauhaus' },
+  { name: 'NRW',        country: 'DE', lon:  6.9603, lat: 50.9375, order: 5,  note: 'Köln region' },
+  { name: 'Den Haag',   country: 'NL', lon:  4.3007, lat: 52.0705, order: 6,  note: 'Netherlands' },
+  { name: 'Paris',      country: 'FR', lon:  2.3522, lat: 48.8566, order: 7,  note: 'France' },
+  { name: 'Nice',       country: 'FR', lon:  7.2620, lat: 43.7102, order: 8,  note: "Côte d'Azur" },
+  { name: 'Barcelona',  country: 'ES', lon:  2.1734, lat: 41.3851, order: 9,  note: 'Catalunya' },
+  { name: 'Mallorca',   country: 'ES', lon:  2.6502, lat: 39.5696, order: 10, note: 'Palma · Balearics' },
+  { name: 'Toskana',    country: 'IT', lon: 11.2558, lat: 43.7696, order: 11, note: 'Firenze · Tuscany' },
+  { name: 'Venedig',    country: 'IT', lon: 12.3155, lat: 45.4408, order: 12, note: 'Venice' },
+  { name: 'Salzburg',   country: 'AT', lon: 13.0550, lat: 47.8095, order: 13, note: 'Austria' },
+  { name: 'Wien',       country: 'AT', lon: 16.3738, lat: 48.2082, order: 14, note: 'Vienna' },
+  { name: 'Prag',       country: 'CZ', lon: 14.4378, lat: 50.0755, order: 15, note: 'Prague' },
+  { name: 'Budapest',   country: 'HU', lon: 19.0402, lat: 47.4979, order: 16, note: 'Hungary' }
+].sort((a, b) => a.order - b.order);
+
+// ============================================================
+// PROJECTION
+// ============================================================
+const svg = d3.select('#stage');
+const tooltip = d3.select('#tooltip');
+let width = window.innerWidth;
+let height = window.innerHeight;
+
+const projection = d3.geoConicConformal()
+  .center([10, 50])
+  .parallels([35, 65])
+  .rotate([-10, 0]);
+
+function fit() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  const scale = Math.min(width, height) * 0.95;
+  projection.scale(scale).translate([width / 2, height / 2 + 40]);
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+}
+fit();
+const path = d3.geoPath(projection);
+
+// ============================================================
+// ARC GENERATOR — curved bezier line between two projected points
+// ============================================================
+function arcPath(a, b, height = 0.28) {
+  const p1 = projection([a.lon, a.lat]);
+  const p2 = projection([b.lon, b.lat]);
+  const mx = (p1[0] + p2[0]) / 2;
+  const my = (p1[1] + p2[1]) / 2;
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  const len = Math.hypot(dx, dy);
+  // lift the control point perpendicular to the segment
+  const nx = -dy / len;
+  const ny = dx / len;
+  const cx = mx + nx * len * height;
+  const cy = my + ny * len * height;
+  return { d: `M${p1[0]},${p1[1]} Q${cx},${cy} ${p2[0]},${p2[1]}`, p1, p2, cx, cy };
+}
+
+// ============================================================
+// LOAD MAP
+// ============================================================
+d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+  .then(world => {
+    const countries = topojson.feature(world, world.objects.countries);
+
+    // Europe filter
+    const euro = countries.features.filter(f => {
+      try {
+        const c = d3.geoCentroid(f);
+        return c[0] > -25 && c[0] < 45 && c[1] > 34 && c[1] < 72;
+      } catch { return false; }
+    });
+
+    // Graticule
+    svg.append('path')
+      .datum(d3.geoGraticule().step([10, 10])())
+      .attr('class', 'graticule')
+      .attr('d', path);
+
+    // Country IDs visited (ISO 3166 numeric)
+    const visited = new Set([276, 528, 250, 724, 380, 40, 203, 348]); // DE NL FR ES IT AT CZ HU
+
+    // Draw countries
+    const countryPaths = svg.selectAll('.country')
+      .data(euro)
+      .enter()
+      .append('path')
+      .attr('class', d => visited.has(+d.id) ? 'country visited' : 'country')
+      .attr('d', path);
+
+    // Interaction for countries
+    countryPaths
+      .on('mouseenter', function() { d3.select(this).classed('hover', true); })
+      .on('mouseleave', function() { d3.select(this).classed('hover', false); });
+
+    // ============================================================
+    // ARCS between consecutive cities
+    // ============================================================
+    const arcs = [];
+    for (let i = 0; i < cities.length - 1; i++) {
+      const info = arcPath(cities[i], cities[i + 1], 0.25);
+      const arcEl = svg.append('path')
+        .attr('class', 'arc')
+        .attr('d', info.d);
+      const len = arcEl.node().getTotalLength();
+      arcEl
+        .attr('stroke-dasharray', len)
+        .attr('stroke-dashoffset', len);
+      arcs.push({ el: arcEl, len, info });
+    }
+
+    // ============================================================
+    // City groups
+    // ============================================================
+    const cityGroups = svg.selectAll('.city-group')
+      .data(cities)
+      .enter()
+      .append('g')
+      .attr('class', 'city-group')
+      .attr('transform', d => {
+        const p = projection([d.lon, d.lat]);
+        return `translate(${p[0]}, ${p[1]})`;
+      });
+
+    // Halo (large soft glow, painted first)
+    cityGroups.append('circle')
+      .attr('class', 'city-halo')
+      .attr('r', 14);
+
+    // Idle pulse rings
+    cityGroups.append('circle').attr('class', 'pulse').attr('r', 4);
+    cityGroups.append('circle').attr('class', 'pulse d1').attr('r', 4);
+    cityGroups.append('circle').attr('class', 'pulse d2').attr('r', 4);
+
+    // Shockwave (fires once when city lights)
+    cityGroups.append('circle').attr('class', 'shock').attr('r', 4);
+
+    // Main dot (glowing outer)
+    cityGroups.append('circle')
+      .attr('class', 'city-dot')
+      .attr('r', 4);
+
+    // White core
+    cityGroups.append('circle')
+      .attr('class', 'city-core')
+      .attr('r', 1.6);
+
+    // Labels — smart offset based on latitude/longitude to reduce overlap
+    cityGroups.append('text')
+      .attr('class', 'city-label')
+      .attr('x', d => d.name === 'Mallorca' || d.name === 'Nice' ? 0 : 9)
+      .attr('y', d => {
+        if (d.name === 'Leipzig' || d.name === 'Weimar') return -8;
+        if (d.name === 'Mallorca') return 16;
+        if (d.name === 'Nice') return 16;
+        return 4;
+      })
+      .attr('text-anchor', d => d.name === 'Mallorca' || d.name === 'Nice' ? 'middle' : 'start')
+      .text(d => d.name);
+
+    // Tooltip
+    cityGroups
+      .on('mouseenter', function(event, d) {
+        const [x, y] = projection([d.lon, d.lat]);
+        tooltip
+          .style('left', x + 'px')
+          .style('top', y + 'px')
+          .html(`<strong>${d.name}</strong><span class="yr">${d.country} · ${d.note}</span>`)
+          .style('opacity', 1);
+      })
+      .on('mouseleave', () => tooltip.style('opacity', 0));
+
+    // Traveller (moving dot)
+    const traveller = svg.append('circle')
+      .attr('class', 'traveller')
+      .attr('r', 3)
+      .style('opacity', 0);
+
+    // Readout
+    const readout = document.getElementById('readout');
+    const rNum = document.getElementById('readoutNum');
+    const rName = document.getElementById('readoutName');
+    const rNote = document.getElementById('readoutNote');
+
+    // ============================================================
+    // PLAY ANIMATION
+    // ============================================================
+    function play() {
+      // Reset
+      cityGroups.selectAll('.city-dot, .city-core, .city-halo').classed('lit', false);
+      cityGroups.selectAll('.pulse').classed('active', false);
+      cityGroups.selectAll('.shock').classed('fire', false);
+      d3.selectAll('.legend .col span').classed('lit', false);
+      arcs.forEach(a => a.el.attr('stroke-dashoffset', a.len));
+      readout.classList.remove('show');
+      traveller.style('opacity', 0);
+
+      const stepDuration = 900;
+      let cumulativeDelay = 400;
+
+      cities.forEach((city, i) => {
+        setTimeout(() => {
+          const g = cityGroups.filter(d => d.name === city.name);
+
+          // Light up the dot
+          g.selectAll('.city-dot, .city-core, .city-halo').classed('lit', true);
+          g.selectAll('.pulse').classed('active', true);
+
+          // Fire shockwave — restart animation by toggling class
+          const shock = g.select('.shock').node();
+          shock.classList.remove('fire');
+          void shock.getBoundingClientRect(); // force reflow
+          shock.classList.add('fire');
+
+          // Show label
+          g.select('.city-label').classed('lit', true);
+
+          // Update legend
+          d3.select(`.legend .col span[data-c="${city.name}"]`).classed('lit', true);
+
+          // Update readout
+          rNum.textContent = String(i + 1).padStart(2, '0') + ' / 16';
+          rName.textContent = city.name;
+          rNote.textContent = city.note;
+          readout.classList.add('show');
+
+          // Animate arc to next city + traveller
+          if (i < arcs.length) {
+            const arc = arcs[i];
+            arc.el
+              .transition()
+              .duration(stepDuration - 100)
+              .ease(d3.easeCubicInOut)
+              .attr('stroke-dashoffset', 0);
+
+            // Traveller along arc
+            traveller.style('opacity', 1);
+            const arcNode = arc.el.node();
+            traveller.transition()
+              .duration(stepDuration - 100)
+              .ease(d3.easeCubicInOut)
+              .tween('move', function() {
+                const total = arc.len;
+                return function(t) {
+                  const pt = arcNode.getPointAtLength(total * t);
+                  d3.select(this).attr('cx', pt.x).attr('cy', pt.y);
+                };
+              });
+          }
+        }, cumulativeDelay);
+        cumulativeDelay += stepDuration;
+      });
+
+      // Fade traveller at end
+      setTimeout(() => traveller.transition().duration(600).style('opacity', 0), cumulativeDelay);
+    }
+
+    play();
+
+    // Controls
+    document.getElementById('btnReplay').addEventListener('click', play);
+    let labelsAlways = false;
+    document.getElementById('btnLabels').addEventListener('click', () => {
+      labelsAlways = !labelsAlways;
+      d3.selectAll('.city-label').classed('lit', labelsAlways);
+    });
+
+    // Loader
+    setTimeout(() => document.getElementById('loading').classList.add('hidden'), 500);
+  })
+  .catch(err => {
+    console.error(err);
+    document.getElementById('loading').textContent = 'Failed to load map data.';
+  });
+
+// Resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => location.reload(), 300);
+});
+</script>
+
+</body>
+</html>
